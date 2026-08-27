@@ -1,22 +1,38 @@
 import React, { useState } from 'react';
+import { z } from 'zod';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { validateSchema } from '@/lib/validation';
+
+const accountSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required'),
+  email: z.string().trim().email('Invalid email address'),
+});
 
 export default function AccountPage() {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes('@')) {
-      setError('Invalid email');
+    setSuccess(false);
+
+    const validationResult = validateSchema(accountSchema, formData);
+
+    if (!validationResult.success && validationResult.errors) {
+      setErrors(validationResult.errors);
       return;
     }
-    if (!name) {
-      setError('Name is required');
-      return;
-    }
-    setError('');
-    alert('Saved');
+
+    // Success simulation
+    setErrors({});
+    setSuccess(true);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -25,17 +41,36 @@ export default function AccountPage() {
       <div className="bg-white shadow rounded-lg p-6">
         <p className="text-gray-600 mb-6">Update your account information below.</p>
         
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label>Name</label>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} className="border p-2 w-full" />
+        {success && (
+          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded" role="alert">
+            Settings saved successfully!
           </div>
-          <div>
-            <label>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="border p-2 w-full" />
-          </div>
-          {error && <p className="text-red-500">{error}</p>}
-          <button type="submit" className="bg-blue-500 text-white p-2 mt-4 rounded">Save Settings</button>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <Input 
+            id="name"
+            name="name"
+            label="Name" 
+            value={formData.name} 
+            onChange={handleChange} 
+            error={errors.name}
+            aria-invalid={!!errors.name}
+          />
+          <Input 
+            id="email"
+            name="email"
+            label="Email" 
+            type="email"
+            value={formData.email} 
+            onChange={handleChange} 
+            error={errors.email}
+            aria-invalid={!!errors.email}
+          />
+          
+          <Button type="submit" className="mt-4">
+            Save Settings
+          </Button>
         </form>
       </div>
     </div>
