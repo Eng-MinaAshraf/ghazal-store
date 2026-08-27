@@ -7,7 +7,7 @@ export const validateSchema = <T>(schema: z.Schema<T>, data: unknown) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      error.issues.forEach((err: z.ZodIssue) => {
         if (err.path.length > 0) {
           formattedErrors[err.path[0].toString()] = err.message;
         }
